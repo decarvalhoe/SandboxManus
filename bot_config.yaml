@@ -1,0 +1,58 @@
+bot:
+  name: "athena_trading_bot_v1"
+  mode: "paper"              # paper | live
+  exchanges:
+    - name: "binance"
+      market: "futures"      # spot | futures
+      symbols: ["BTCUSDT", "ETHUSDT"]
+      leverage: 2
+      fees_bps: 1.0          # si override
+  data:
+    granularity: "1m"
+    history_days: 365
+    store: "timescaledb"
+  strategy:
+    type: "mean_reversion"   # ou momentum/market_making
+    entry:
+      rsi_low: 28
+    exit:
+      rsi_high: 68
+      take_profit_bps: 40
+      stop_loss_bps: 25
+    sizing:
+      mode: "percent_equity"
+      value: 0.02
+  execution:
+    order_type: "limit_post_only"
+    max_slippage_bps: 5
+    latency_budget_ms: 150
+  risk:
+    daily_loss_cap_pct: 2.0
+    max_position_per_symbol_pct: 20
+    global_exposure_cap_pct: 80
+  ops:
+    alerts: ["telegram"]
+    kill_switch: true
+    ntp_required: true
+
+secrets:
+  vault_path: "kv/trading/bot_athena"
+
+# Configuration pour environnement de développement
+development:
+  testnet: true
+  paper_trading: true
+  log_level: "DEBUG"
+  monitoring:
+    prometheus_port: 9090
+    grafana_port: 3000
+  
+# Configuration de sécurité
+security:
+  api_keys_rotation_days: 30
+  ip_whitelist: []
+  max_daily_trades: 100
+  emergency_stop_conditions:
+    - max_drawdown_pct: 5.0
+    - consecutive_losses: 5
+    - connection_timeout_sec: 30
